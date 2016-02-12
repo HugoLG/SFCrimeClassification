@@ -11,7 +11,9 @@ def preprocessData():
 	3.- Have it remove the description and resolution columns instead of doing it manually
 	4.- Separate the timestamp into different fields (year, month, day of the month, time)
 	5.- Fix the warning
-	6.- More ideas?
+	6.- Change category into format (0,0,....1,0) if possible, or consider pair (like 'THEFT/LARCENY') as
+		a new category. This will allow using only one column as category 
+	7. More ideas?
 	"""
 	with open('train.csv','r') as dest_f:
 		data_iter = csv.reader(dest_f, delimiter = ',', quotechar = '"')
