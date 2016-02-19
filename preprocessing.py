@@ -10,7 +10,7 @@ def preprocessData(k):
 	
 	Returns
 	np.array Data: The order of the columns is the following
-		Category Day(Monday = 0) PdDistrict AddressCluster X Y Time Year Month DayNumber
+		Category Day(Monday = 0) PdDistrict AddressCluster Time Year Month DayNumber
 	dictionary Category: Contains the mapping of the categories to numbers
 	dictionary District: Contains the mapping of the districts to numbers
 	
@@ -66,12 +66,13 @@ def preprocessData(k):
 		data[i][4] = labels[i]
 		i+=1
 	
-        
+        data = np.delete(data, 5, 1);
+        data = np.delete(data, 5, 1);
         data = np.array(data)
 
         if(":" in data[0][0] and "-" in data [0][0]):
             #need to split dates
-            times = [dates[0].split(" ")[1] for dates in data]
+            times = [(int(dates[0].split(" ")[1].split(":")[0])*60+int(dates[0].split(" ")[1].split(":")[1])) for dates in data]
             dates = [dates[0].split(" ")[0].split("-") for dates in data]
             times = np.array([times])
             dates = np.array(dates)
@@ -83,6 +84,6 @@ def preprocessData(k):
 
 prepData, catDict, districtDict = preprocessData(15)
 
-#print prepData[0]
+print prepData[0]
 #print str(catDict)
 #print str(districtDict)
