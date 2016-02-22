@@ -1,15 +1,12 @@
 import numpy as np
 from sklearn.cluster import KMeans
 import csv
-
-<<<<<<< HEAD
 =======
 import numpy as np
 from sklearn.cluster import KMeans
 import csv
 
 np.set_printoptions(threshold='nan')
->>>>>>> 86de9b9f0cbdaecac68bb227a07bab3e76089bfd
 def preprocessData(k):
 	"""
 	This method opens a csv file and preporcess the information
@@ -18,11 +15,9 @@ def preprocessData(k):
 	
 	Returns
 	np.array Data: The order of the columns is the following
-<<<<<<< HEAD
 		Category Day(Monday = 0) PdDistrict AddressCluster Time Year Month DayNumber
 =======
 		Category Day(Monday = 0) PdDistrict AddressCluster X Y Time Year Month DayNumber
->>>>>>> 86de9b9f0cbdaecac68bb227a07bab3e76089bfd
 	dictionary Category: Contains the mapping of the categories to numbers
 	dictionary District: Contains the mapping of the districts to numbers
 	
@@ -32,11 +27,8 @@ def preprocessData(k):
 	5.- Fix the warning
 	7. More ideas?
 	"""
-<<<<<<< HEAD
-	with open('train.csv','r') as dest_f:
-=======
+
 	with open('train_cut.csv','r') as dest_f:
->>>>>>> 86de9b9f0cbdaecac68bb227a07bab3e76089bfd
 		data_iter = csv.reader(dest_f, delimiter = ',', quotechar = '"')
 		data = [data for data in data_iter]
 	#Gets rid of the header, could also be changed to receive a file with no headers
@@ -82,7 +74,6 @@ def preprocessData(k):
 		data[i][4] = labels[i]
 		i+=1
 	
-<<<<<<< HEAD
         data = np.delete(data, 5, 1);
         data = np.delete(data, 5, 1);
         data = np.array(data)
@@ -104,27 +95,6 @@ prepData, catDict, districtDict = preprocessData(15)
 print prepData[0]
 #print str(catDict)
 #print str(districtDict)
-=======
-        
-        data = np.array(data)
-
-        if(":" in data[0][0] and "-" in data [0][0]):
-            #need to split dates
-            times = [dates[0].split(" ")[1] for dates in data]
-            dates = [dates[0].split(" ")[0].split("-") for dates in data]
-            times = np.array([times])
-            dates = np.array(dates)
-            data = np.concatenate((data, np.atleast_1d(times.T)), axis=1)
-            data = np.concatenate((data, dates), axis = 1)
-            data = np.delete(data, 0, 1)
-            data = np.delete(data,4,1)
-            data = np.delete(data,4,1)
-            data = np.delete(data,4,1)
-
-	return data, categoryDict, pdDistrictDict
-
-prepData, catDict, districtDict = preprocessData(15)
->>>>>>> 86de9b9f0cbdaecac68bb227a07bab3e76089bfd
 dataset = prepData
 
 vectorizer = CountVectorizer()
