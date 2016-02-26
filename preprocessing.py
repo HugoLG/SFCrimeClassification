@@ -1,89 +1,112 @@
+import pandas as pd
+import re
+import math
+from sklearn.cross_validation import train_test_split
+from sklearn import preprocessing
+from sklearn.metrics import log_loss
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
 import numpy as np
-from sklearn.cluster import KMeans
-import csv
+ 
 
-def preprocessData(k):
-	"""
-	This method opens a csv file and preporcess the information
-	Receives:
-	integer k: number of clusters with which to separate the addresses
-	
-	Returns
-	np.array Data: The order of the columns is the following
-		Category Day(Monday = 0) PdDistrict AddressCluster Time Year Month DayNumber
-	dictionary Category: Contains the mapping of the categories to numbers
-	dictionary District: Contains the mapping of the districts to numbers
-	
-	potential changes:
-	1.- Provide it with the name of the file to open
-	3.- Have it remove the description and resolution columns instead of doing it manually
-	5.- Fix the warning
-	7. More ideas?
-	"""
-	with open('train.csv','r') as dest_f:
-		data_iter = csv.reader(dest_f, delimiter = ',', quotechar = '"')
-		data = [data for data in data_iter]
-	#Gets rid of the header, could also be changed to receive a file with no headers
-	data = data[1:]
-	clusterData = [clusterData[5:7] for clusterData in data]
+def preprocess(file):
+    """
+    Receives the name of the file that is used for obtaining the data.
+    Returns
+	DataFrame Data: The order of the columns is the following
+            Two columns containing the information about the hour using sine and cosine
+            Two columns containing the information about the day number using sine and cosine
+            Two columns containint the information about the month number using sine and cosine
+            N (12 i think) columns containing a  binarized string representation of the year
+            7 columns containing a binarized string representation of the day of the week
+            N (9 i think) columns containing a binarized string representation of the districts
+            One column with the normalized X coordinate
+            One column with the normalized Y coordinate
+            One column with labels representing the diff. crime categories
 
-        clusterData = np.array(clusterData)
-	kmeans = KMeans(n_clusters=k)
-	kmeans.fit(clusterData)
-	labels = kmeans.predict(clusterData)
+        Label Encoder: contains the information of the categories
 
-        counterCategory = 0
-        counterPdDistrict = 0
-        categoryDict = {}
-        pdDistrictDict = {}
-        
-        for i in range(0, len(data)):
-                if("Monday" in data[i][2]):
-                    data[i][2] = 0
-                elif("Tuesday" in data[i][2]):
-                    data[i][2] = 1
-                elif("Wednesday" in data[i][2]):
-                    data[i][2] = 2
-                elif("Thursday" in data[i][2]):
-                    data[i][2] = 3
-                elif("Friday" in data[i][2]):
-                    data[i][2] = 4
-                elif("Saturday" in data[i][2]):
-                    data[i][2] = 5
-                elif("Sunday" in data[i][2]):
-                    data[i][2] = 6
+    Refer to http://efavdb.com/predicting-san-francisco-crimes/     in order to know
+    how to use data frames in scikit learn code. For example:
 
-                if not categoryDict.has_key(data[i][1]):
-                    categoryDict[data[i][1]] = counterCategory
-                    counterCategory += 1
-                data[i][1] = categoryDict[data[i][1]]
+    features = ['Friday', 'Monday', 'Saturday', 'Sunday', 'Thursday', 'Tuesday',
+    'Wednesday', 'BAYVIEW', 'CENTRAL', 'INGLESIDE', 'MISSION',
+    'NORTHERN', 'PARK', 'RICHMOND', 'SOUTHERN', 'TARAVAL', 'TENDERLOIN']
+ 
+    training, validation = train_test_split(train_data, train_size=.60)
+    model = BernoulliNB()
+    model.fit(training[features], training['crime'])
 
-                if not pdDistrictDict.has_key(data[i][3]):
-                    pdDistrictDict[data[i][3]] = counterPdDistrict
-                    counterPdDistrict += 1
-                data[i][3] = pdDistrictDict[data[i][3]]
-                #substitute the addresses for cluster labels
-		data[i][4] = labels[i]
-		i+=1
-	
-        data = np.delete(data, 5, 1);
-        data = np.delete(data, 5, 1);
-        data = np.array(data)
+    The method is still missing the preprocessing of the address, ill finish that later
+    """
 
-        if(":" in data[0][0] and "-" in data [0][0]):
-            #need to split dates
-            times = [(int(dates[0].split(" ")[1].split(":")[0])*60+int(dates[0].split(" ")[1].split(":")[1])) for dates in data]
-            dates = [dates[0].split(" ")[0].split("-") for dates in data]
-            times = np.array([times])
-            dates = np.array(dates)
-            data = np.concatenate((data, np.atleast_1d(times.T)), axis=1)
-            data = np.concatenate((data, dates), axis = 1)
-            data = np.delete(data, 0, 1)
+    train=pd.read_csv(file, parse_dates = ['Dates'])
 
-	return data, categoryDict, pdDistrictDict
+    #Convert crime labels to numbers
+    crime_labels = preprocessing.LabelEncoder()
+    crime = crime_labels.fit_transform(train.Category)
+ 
+    #Get binarized weekdays and districts.
+    days = pd.get_dummies(train.DayOfWeek)
+    district = pd.get_dummies(train.PdDistrict)
 
-prepData, catDict, districtDict = preprocessData(15)
 
-print prepData[0]
-#print str(catDict)
-#print str(districtDict)
+    #convert hours to the circle format
+    hour = train.Dates.dt.hour
+    col1 = [math.sin(2*h*math.pi/24.0) for h in hour]
+    col2 = [math.cos(2*h*math.pi/24.0) for h in hour]
+    hour = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
+
+    #convert months to the circle format
+    month = train.Dates.dt.month
+    col1 = [math.sin(2*h*math.pi/12.0) for h in month]
+    col2 = [math.cos(2*h*math.pi/12.0) for h in month]
+    month = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
+
+    #convert days to the circle format
+    day = train.Dates.dt.day
+    col1 = [math.sin(2*h*math.pi/31.0) for h in day]
+    col2 = [math.cos(2*h*math.pi/31.0) for h in day]
+    day = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
+
+    #binarize years
+    year = train.Dates.dt.year
+    year = pd.get_dummies(year)
+
+    #work on address
+    """
+    Ill work on this later...
+    address = train.Address
+    rgx = re.compile('( AL( |\Z|\s))|( ALY( |\Z|\s))|( ARC( |\Z|\s))|( AV( |\Z|\s))|( AVE( |\Z|\s))|( BL( |\Z|\s))|( BLVD( |\Z|\s))|( BR( |\Z|\s))|( BYP( |\Z|\s))|( CSWY( |\Z|\s))|( CR( |\Z|\s))|( CTR( |\Z|\s))|( CIR( |\Z|\s))|( CT( |\Z|\s))|( CRES( |\Z|\s))|( DR( |\Z|\s))|( EXPY( |\Z|\s))|( EXT( |\Z|\s))|( FWY( |\Z|\s))|( GDNS( |\Z|\s))|( GRV( |\Z|\s))|( HTS( |\Z|\s))|( HWY( |\Z|\s))|( HY( |\Z|\s))|( LN( |\Z|\s))|( MNR( |\Z|\s))|( PARK( |\Z|\s))|( PL( |\Z|\s))|( PZ( |\Z|\s))|( PLZ( |\Z|\s))|( PT( |\Z|\s))|( RD( |\Z|\s))|( RW( |\Z|\s))|( RTE( |\Z|\s))|( R( |\Z|\s))|( SQ( |\Z|\s))|( ST( |\Z|\s))|( TER( |\Z|\s))|( TR( |\Z|\s))|( TRL( |\Z|\s))|( TPKE( |\Z|\s))|( VIA( |\Z|\s))|( VIS( |\Z|\s))|( WAY( |\Z|\s))|( WY( |\Z|\s))|( WK( |\Z|\s))|( I-80( |\Z|\s))|( VIA( |\Z|\s))|( MAR( |\Z|\s))')
+    f = lambda x: rgx.search(x).group()
+    address = address.map(f)
+    print address
+    """
+
+    #work on X and Y
+    X = train.X
+    #normalize X
+    preprocessing.normalize(X, norm = 'max', copy = False)
+    #reduce decimal places
+    f = lambda x: '%.5f' % float(x) 
+    X = X.map(f)
+    X = pd.DataFrame(X)
+
+    Y = train.Y
+    #normalize Y
+    preprocessing.normalize(Y, norm = 'max', copy = False)
+    #reduce decimal places
+    f = lambda x: '%.5f' % float(x) 
+    Y = Y.map(f)
+    Y = pd.DataFrame(Y)
+
+ 
+    #Build new array
+    train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
+    train_data['crime']=crime
+
+    return train_data, crime_labels
+
+
+data, crime_labels = preprocess('train.csv')
+print type(data), type(crime_labels)
