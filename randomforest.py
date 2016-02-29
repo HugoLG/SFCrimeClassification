@@ -12,6 +12,7 @@ import random
 import pandas as pd
 import sys
 
+
 def QuickReduct(C,D):
     gammaCD = 0
     for t in D:
@@ -66,6 +67,7 @@ def trainTrees(numTrees, Xt, yt):
 
 
 def randomForest(file):
+    file = 'D:\Essex\CE903 Group Project\Data\preprocessed_cut.csv'
     prepData = pd.read_csv(file)
 
     print 'finished read data'
@@ -139,9 +141,10 @@ def randomForest(file):
 
     #this is the accuracy by definition, include the TN into computation
     print (TP+TN)/(TP+FP+FN+TN)
+    return pool,confTable
 
 """print confusion table of this training"""
-def printConfusionTable():
+def printConfusionTable(confTable):
     for i in range(len(confTable)):
         print i
         print '['+str(confTable[i][0][0])+'|'+str(confTable[i][0][1])+']'
@@ -149,10 +152,10 @@ def printConfusionTable():
         print
 
 """predicted another instance"""
-def randomForestPredicted(X):
+def randomForestPredicted(X,numCat,pool):
     y = []
     for index in range(len(X)):
-        countResult = [0 for x in range(countCat)]
+        countResult = [0 for x in range(numCat)]
         for t in pool:
             result = t.predict(X[index])
             countResult[result] = countResult[result]+1
