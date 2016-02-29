@@ -22,6 +22,7 @@ print 'finished read data'
 headers = prepData.columns.values
 
 features = np.delete(headers,-1)
+features = np.delete(headers,0)
 #print type(features)
 targetH = headers[-1]
 
