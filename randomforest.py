@@ -11,6 +11,8 @@ import numpy
 import random
 import pandas as pd
 import sys
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def QuickReduct(C,D):
@@ -67,17 +69,21 @@ def trainTrees(numTrees, Xt, yt):
 
 
 def randomForest(file):
-    file = 'D:\Essex\CE903 Group Project\Data\preprocessed_cut.csv'
+    #file = 'D:\Essex\CE903 Group Project\Data\preprocessed_cut.csv'
     prepData = pd.read_csv(file)
 
     print 'finished read data'
     headers = prepData.columns.values
+    #print("heaaders....")
+    #print(headers)
 
     features = np.delete(headers,-1)
     #print type(features)
     #features = np.delete(headers,0)
+    #print("headers -1 ...")
+    #print(len(headers))
     targetH = headers[-1]
-    print(targetH)
+    #print(targetH)
 
     data = prepData[features]
     target = prepData[targetH]
@@ -90,6 +96,7 @@ def randomForest(file):
     print 'start training'
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.200000, random_state=42)
     pool = trainTrees(3,X_train,y_train)
+    #print len(pool)
     print 'finished training'
 
     correctly = 0.0
@@ -98,13 +105,13 @@ def randomForest(file):
     confTable = [[[0 for x in range(2)]for x in range(2)]for x in range(countCat)]
     for index in range(len(y_test)):
         countResult = [0 for x in range(countCat)]
-    for t in pool:
-        result = t.predict(X_test.iloc[index])
-        countResult[result] = countResult[result]+1
+        for t in pool:
+            result = t.predict(X_test.iloc[index])
+            countResult[result] = countResult[result]+1
         maxIndex = countResult.index(max(countResult))
         #print type(y_test)
         yti = y_test.iloc[index]
-        #print yti, countCat
+        #print yti, maxIndex
         if(yti == maxIndex):
             correctly = correctly+1
             confTable[yti][0][0] = confTable[yti][0][0]+1 #TP
@@ -137,10 +144,10 @@ def randomForest(file):
 
     print ("precision %f" %(precision))
     print ("recall %f" %(recall))
-    print ("accuracy %f" %(correctly/len(y_test)))
+    print ("correctly classified %f" %(correctly/len(y_test)))
 
     #this is the accuracy by definition, include the TN into computation
-    print (TP+TN)/(TP+FP+FN+TN)
+    print ("accuracy %f" %((TP+TN)/(TP+FP+FN+TN)))
     return pool,confTable
 
 """print confusion table of this training"""
@@ -166,7 +173,8 @@ def randomForestPredicted(X,numCat,pool):
 
 
 if __name__ == '__main__':
-    randomForest("out.csv")
+    p, ct = randomForest("preprocessed_cut.csv")
+    #printConfusionTable(ct)
 
 #printconfusiontablentConfusionTable()
 #print randomForestPredicted([X_test.iloc[0],X_test.iloc[2]])

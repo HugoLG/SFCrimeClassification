@@ -23,12 +23,9 @@ def preprocess(file):
             One column with the normalized X coordinate
             One column with the normalized Y coordinate
             One column with labels representing the diff. crime categories
-
         Label Encoder: contains the information of the categories
-
     Refer to http://efavdb.com/predicting-san-francisco-crimes/     in order to know
     how to use data frames in scikit learn code. For example:
-
     features = ['Friday', 'Monday', 'Saturday', 'Sunday', 'Thursday', 'Tuesday',
     'Wednesday', 'BAYVIEW', 'CENTRAL', 'INGLESIDE', 'MISSION',
     'NORTHERN', 'PARK', 'RICHMOND', 'SOUTHERN', 'TARAVAL', 'TENDERLOIN']
@@ -36,42 +33,56 @@ def preprocess(file):
     training, validation = train_test_split(train_data, train_size=.60)
     model = BernoulliNB()
     model.fit(training[features], training['crime'])
-
     The method is still missing the preprocessing of the address, ill finish that later
     """
 
     train=pd.read_csv(file, parse_dates = ['Dates'])
 
+    categoryDict = {}
+    counterCategory = 0
+
     #Convert crime labels to numbers
-    crime_labels = preprocessing.LabelEncoder()
-    crime = crime_labels.fit_transform(train.Category)
- 
+    crime = train.Category
+
+
+    for i in range(0, len(crime)):
+        if not categoryDict.has_key(crime[i]):
+            categoryDict[crime[i]] = counterCategory
+            counterCategory += 1
+
+    crime_processed = [categoryDict[c] for c in crime] 
+    crime_processed = pd.DataFrame(crime_processed)
+
+
     #Get binarized weekdays and districts.
     days = pd.get_dummies(train.DayOfWeek)
+    days = days.reindex_axis(sorted(days.columns), axis = 1)
     district = pd.get_dummies(train.PdDistrict)
+    district = district.reindex_axis(sorted(district.columns), axis = 1)
 
 
     #convert hours to the circle format
     hour = train.Dates.dt.hour
-    col1 = [math.sin(2*h*math.pi/24.0) for h in hour]
-    col2 = [math.cos(2*h*math.pi/24.0) for h in hour]
+    col1 = [int(math.sin(2*h*math.pi/24.0)*1000)/1000.0 for h in hour]
+    col2 = [int(math.cos(2*h*math.pi/24.0)*1000)/1000.0 for h in hour]
     hour = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
 
     #convert months to the circle format
     month = train.Dates.dt.month
-    col1 = [math.sin(2*h*math.pi/12.0) for h in month]
-    col2 = [math.cos(2*h*math.pi/12.0) for h in month]
+    col1 = [int(math.sin(2*h*math.pi/12.0)*1000)/1000.0 for h in month]
+    col2 = [int(math.cos(2*h*math.pi/12.0)*1000)/1000.0 for h in month]
     month = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
 
     #convert days to the circle format
     day = train.Dates.dt.day
-    col1 = [math.sin(2*h*math.pi/31.0) for h in day]
-    col2 = [math.cos(2*h*math.pi/31.0) for h in day]
+    col1 = [int(math.sin(2*h*math.pi/31.0)*1000)/1000.0 for h in day]
+    col2 = [int(math.cos(2*h*math.pi/31.0)*1000)/1000.0 for h in day]
     day = pd.concat([pd.DataFrame(col1), pd.DataFrame(col2)], axis = 1)
 
     #binarize years
     year = train.Dates.dt.year
     year = pd.get_dummies(year)
+    year = year.reindex_axis(sorted(year.columns), axis=1)
 
     #work on address
     """
@@ -103,10 +114,19 @@ def preprocess(file):
  
     #Build new array
     train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
-    train_data['crime']=crime
+    train_data['crime']=crime_processed
+    
+    train_data.to_csv("preprocessed_data.csv", sep=',')
 
-    return train_data, crime_labels
+    out_file =open('dictionary.txt', "w")
+    for k in sorted(categoryDict, key=categoryDict.get):
+        out_file.write(k)
+        out_file.write("\n")
+
+    out_file.close
+
+    return train_data
 
 
-data, crime_labels = preprocess('train.csv')
-print type(data), type(crime_labels)
+preprocess('train.csv')
+
