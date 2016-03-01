@@ -9,10 +9,13 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
  
 
-def preprocess(file):
+def preprocess(file, isTraining):
     """
-    Receives the name of the file that is used for obtaining the data.
+    Receives the name of the file that is used for obtaining the data and a boolean.
+    If the boolean is true, the preprocess prepares the trianing file
+    If the boolean is false, the preprocess prepares the testing file
     Returns
+        Nothing, prints a file with the following format:
 	DataFrame Data: The order of the columns is the following
             Two columns containing the information about the hour using sine and cosine
             Two columns containing the information about the day number using sine and cosine
@@ -23,16 +26,8 @@ def preprocess(file):
             One column with the normalized X coordinate
             One column with the normalized Y coordinate
             One column with labels representing the diff. crime categories
-        Label Encoder: contains the information of the categories
-    Refer to http://efavdb.com/predicting-san-francisco-crimes/     in order to know
-    how to use data frames in scikit learn code. For example:
-    features = ['Friday', 'Monday', 'Saturday', 'Sunday', 'Thursday', 'Tuesday',
-    'Wednesday', 'BAYVIEW', 'CENTRAL', 'INGLESIDE', 'MISSION',
-    'NORTHERN', 'PARK', 'RICHMOND', 'SOUTHERN', 'TARAVAL', 'TENDERLOIN']
- 
-    training, validation = train_test_split(train_data, train_size=.60)
-    model = BernoulliNB()
-    model.fit(training[features], training['crime'])
+        Prints a dictionary for categories
+
     The method is still missing the preprocessing of the address, ill finish that later
     """
 
@@ -42,16 +37,17 @@ def preprocess(file):
     counterCategory = 0
 
     #Convert crime labels to numbers
-    crime = train.Category
+    if isTraining:
+        crime = train.Category
 
 
-    for i in range(0, len(crime)):
-        if not categoryDict.has_key(crime[i]):
-            categoryDict[crime[i]] = counterCategory
-            counterCategory += 1
+        for i in range(0, len(crime)):
+            if not categoryDict.has_key(crime[i]):
+                categoryDict[crime[i]] = counterCategory
+                counterCategory += 1
 
-    crime_processed = [categoryDict[c] for c in crime] 
-    crime_processed = pd.DataFrame(crime_processed)
+        crime_processed = [categoryDict[c] for c in crime] 
+        crime_processed = pd.DataFrame(crime_processed)
 
 
     #Get binarized weekdays and districts.
@@ -84,16 +80,6 @@ def preprocess(file):
     year = pd.get_dummies(year)
     year = year.reindex_axis(sorted(year.columns), axis=1)
 
-    #work on address
-    """
-    Ill work on this later...
-    address = train.Address
-    rgx = re.compile('( AL( |\Z|\s))|( ALY( |\Z|\s))|( ARC( |\Z|\s))|( AV( |\Z|\s))|( AVE( |\Z|\s))|( BL( |\Z|\s))|( BLVD( |\Z|\s))|( BR( |\Z|\s))|( BYP( |\Z|\s))|( CSWY( |\Z|\s))|( CR( |\Z|\s))|( CTR( |\Z|\s))|( CIR( |\Z|\s))|( CT( |\Z|\s))|( CRES( |\Z|\s))|( DR( |\Z|\s))|( EXPY( |\Z|\s))|( EXT( |\Z|\s))|( FWY( |\Z|\s))|( GDNS( |\Z|\s))|( GRV( |\Z|\s))|( HTS( |\Z|\s))|( HWY( |\Z|\s))|( HY( |\Z|\s))|( LN( |\Z|\s))|( MNR( |\Z|\s))|( PARK( |\Z|\s))|( PL( |\Z|\s))|( PZ( |\Z|\s))|( PLZ( |\Z|\s))|( PT( |\Z|\s))|( RD( |\Z|\s))|( RW( |\Z|\s))|( RTE( |\Z|\s))|( R( |\Z|\s))|( SQ( |\Z|\s))|( ST( |\Z|\s))|( TER( |\Z|\s))|( TR( |\Z|\s))|( TRL( |\Z|\s))|( TPKE( |\Z|\s))|( VIA( |\Z|\s))|( VIS( |\Z|\s))|( WAY( |\Z|\s))|( WY( |\Z|\s))|( WK( |\Z|\s))|( I-80( |\Z|\s))|( VIA( |\Z|\s))|( MAR( |\Z|\s))')
-    f = lambda x: rgx.search(x).group()
-    address = address.map(f)
-    print address
-    """
-
     #work on X and Y
     X = train.X
     #normalize X
@@ -114,19 +100,20 @@ def preprocess(file):
  
     #Build new array
     train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
-    train_data['crime']=crime_processed
+    if isTraining:
+        train_data['crime']=crime_processed
+        out_file =open('dictionary.txt', "w")
+        for k in sorted(categoryDict, key=categoryDict.get):
+            out_file.write(k)
+            out_file.write("\n")
+
+        out_file.close
+        train_data.to_csv("preprocessed_data.csv", sep=',')
     
-    train_data.to_csv("preprocessed_data.csv", sep=',')
-
-    out_file =open('dictionary.txt', "w")
-    for k in sorted(categoryDict, key=categoryDict.get):
-        out_file.write(k)
-        out_file.write("\n")
-
-    out_file.close
+    else:
+        train_data.to_csv("preprocessed_testing.csv", sep=',')
 
     return train_data
 
 
-preprocess('train.csv')
-
+preprocess('train.csv', True)
