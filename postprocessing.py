@@ -15,7 +15,6 @@ def createOutput(y,filename):
     
     output = []
     catDict = readDict(filename)
-    #print catDict
     v = catDict.keys()
     v.sort()
     #print v
@@ -23,10 +22,15 @@ def createOutput(y,filename):
     for t in y:
         body = []
         for i in range(len(catDict)):
+            #print t, catDict[v[i]]
             if t == catDict[v[i]]:
+                #print 'e'
                 body.append(1)
+                #print body
             else: body.append(0)
+        #print 'body', body
         output.append(body)
+    #print output
     return output
         
 #t = createOutput([0,3,5])
@@ -38,8 +42,5 @@ def writeOutputToCSV(nameOfFile,y,dic):
     wr = csv.writer(resultFile,dialect = 'excel')
     wr.writerows(output)
 
-def convertToOutputAndWriteFile(y,dic,filename):
-    t = createOutput(y,dic)
-    writeOutputToCSV(filename,t)
 
 #writeOutputToCSV('test.csv',[0,1,3],'dictionary.txt')
