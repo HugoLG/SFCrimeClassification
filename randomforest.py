@@ -95,7 +95,7 @@ def randomForest(file):
 
     print 'start training'
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.200000, random_state=42)
-    pool = trainTrees(10,X_train,y_train)
+    pool = trainTrees(3,X_train,y_train)
     #print len(pool)
     print 'finished training'
 
