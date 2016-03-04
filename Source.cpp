@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]) {
 	//Command line arguments are used in order to facilitate
 	//the use of the program from the python interface
-	if (argc == 1) {
+	if (argc != 2 || (argv[1][0]!='A' && argv[1][0]!='B' && argv[1][0]!='C')) {
 		cout << "Invalid usage.\n" << "Correct usage: \n" << "./network option\n";
 		cout << "Valid options: \n" << "A: Train the classifier\n" << "B: Run the classifier over the test file\n" << "C: Predict a crime\n";
 		cout << "The first time the program is run, the A parameter must be called first.\n";
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 		//The data and validation dynamic arrays
 		//are passed to the network. The network
 		//uses them by reference
-		network.run(30, data, validationData);
+		network.run(2, data, validationData);
 		network.saveToFile("saved.txt");
 
 		//Free memory
@@ -60,13 +60,6 @@ int main(int argc, char *argv[]) {
 	else if (argv[1][0] == 'C') {
 		NeuralNetwork network("saved.txt");
 		network.predict();
-	}
-	else {
-		cout << "Invalid usage.\n" << "Correct usage: \n" << "./network option\n";
-		cout << "Valid options: \n" << "A: Train the classifier\n" << "B: Run the classifier over the test file\n" << "C: Predict a crime\n";
-		cout << "The first time the program is run, the A parameter must be called first.\n";
-		cout << "The program will not run over the test file or predict a crime if it has not been trained first.\n";
-		exit(0);
 	}
 	cout << "Finished\n";
 	return 0;
