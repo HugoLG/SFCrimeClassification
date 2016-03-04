@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 		//The data and validation dynamic arrays
 		//are passed to the network. The network
 		//uses them by reference
-		network.run(2, data, validationData);
+		network.run(150, data, validationData);
 		network.saveToFile("saved.txt");
 
 		//Free memory
