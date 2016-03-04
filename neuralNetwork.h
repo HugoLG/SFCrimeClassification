@@ -271,7 +271,7 @@ void NeuralNetwork::run(int epochs, double** dat, double** val) {
 
 	}
 	double acc = runValidation(true);
-	FILE *fp = fopen("results_training.txt", "w");
+	FILE *fp = fopen("confusion_matrix.txt", "w");
 
 	for (int i = 0; i < 39; i++) {
 		for (int j = 0; j < 39; j++) {
@@ -279,6 +279,8 @@ void NeuralNetwork::run(int epochs, double** dat, double** val) {
 		}
 		fprintf(fp, "\n");
 	}
+	fclose(fp);
+	fp = fopen("precision_recall.txt", "w");
 	//calculate precision and recall for all classes
 	//[0] is precision, [1] is recall
 	double statistics[2][39];
