@@ -10,6 +10,7 @@ from sklearn.utils import shuffle
 import numpy
 import random
 import pandas as pd
+import postprocessing
 import sys
 import warnings
 warnings.filterwarnings("ignore")
@@ -69,8 +70,7 @@ def trainTrees(numTrees, Xt, yt):
 
 
 def randomForest(file):
-    #file = 'D:\Essex\CE903 Group Project\Data\preprocessed_cut.csv'
-    prepData = pd.read_csv(file)
+    prepData = pd.read_csv(file)#,sep = ' ')
 
     print 'finished read data'
     headers = prepData.columns.values
@@ -95,7 +95,7 @@ def randomForest(file):
 
     print 'start training'
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.200000, random_state=42)
-    pool = trainTrees(3,X_train,y_train)
+    pool = trainTrees(10,X_train,y_train)
     #print len(pool)
     print 'finished training'
 
@@ -154,9 +154,19 @@ def randomForest(file):
 def printConfusionTable(confTable):
     for i in range(len(confTable)):
         print i
+        try:
+            precision = (float)(confTable[i][0][0])/(float)(confTable[i][0][0]+confTable[i][0][1])
+        except ZeroDivisionError:
+            precision = 'not measuarable'
+        try:
+            recall = (float)(confTable[i][0][0])/(float)(confTable[i][0][0]+confTable[i][1][0])
+        except ZeroDivisionError:
+            recall = 'not measurable'
+        
         print '['+str(confTable[i][0][0])+'|'+str(confTable[i][0][1])+']'
         print '['+str(confTable[i][1][0])+'|'+str(confTable[i][1][1])+']'
-        print
+        print "precision ", precision
+        print "recall ", recall
 
 """predicted another instance"""
 def randomForestPredicted(X,numCat,pool):
@@ -164,7 +174,10 @@ def randomForestPredicted(X,numCat,pool):
     for index in range(len(X)):
         countResult = [0 for x in range(numCat)]
         for t in pool:
-            result = t.predict(X[index])
+            try:
+                result = t.predict(X.iloc[index])
+            except ValueError:
+                pass
             countResult[result] = countResult[result]+1
         maxIndex = countResult.index(max(countResult))
         y.append(maxIndex)
@@ -173,8 +186,20 @@ def randomForestPredicted(X,numCat,pool):
 
 
 if __name__ == '__main__':
-    p, ct = randomForest("preprocessed_cut.csv")
-    #printConfusionTable(ct)
+    p, ct = randomForest("preprocessed_data.csv")
+    printConfusionTable(ct)
+    testData = pd.read_csv('preprocessed_testing.csv')#_cut.csv')
+    #print testData
+    #data = pd.np.array(testData)
+    
+    #print data
+    #data =  np.delete(data,-1,axis=0)
+    y = randomForestPredicted(testData, 39, p)
+    #print y
+
+    from postprocessing import writeOutputToCSV
+    writeOutputToCSV('run_10trees.csv',y,'dictionary.txt')
+    
 
 #printconfusiontablentConfusionTable()
 #print randomForestPredicted([X_test.iloc[0],X_test.iloc[2]])
