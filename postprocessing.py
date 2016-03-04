@@ -17,18 +17,22 @@ def createOutput(y,filename):
     catDict = readDict(filename)
     v = catDict.keys()
     v.sort()
+    v.insert(0,'id')
     #print v
     output.append(v)
+    count = 0
     for t in y:
         body = []
-        for i in range(len(catDict)):
+        body.append(count)
+        for i in range(1,len(v)):
             #print t, catDict[v[i]]
             if t == catDict[v[i]]:
-                #print 'e'
+                #print t, v[i], catDict[v[i]]
                 body.append(1)
                 #print body
             else: body.append(0)
         #print 'body', body
+        count+=1
         output.append(body)
     #print output
     return output
