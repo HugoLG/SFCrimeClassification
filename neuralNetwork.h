@@ -633,10 +633,6 @@ void NeuralNetwork::getNormalizer() {
 	ammountValidation = x / s;
 	fclose(fp);
 	cout << "Finished normalizing\n";
-	for (int i = 0; i < 76; i++) {
-		cout << data[0][i] << " ";
-	}
-	cout << endl;
 	normalizer.push_back(maxValues);
 	normalizer.push_back(minValues);
 }
