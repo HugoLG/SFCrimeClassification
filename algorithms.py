@@ -12,7 +12,8 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import log_loss
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 import numpy as np
 import pandas as pd
 
@@ -144,56 +145,31 @@ def print_accuracy(validation_y, validation_pred):
     """ Returns the accuracy fo the validation.
     """
     print accuracy_score(validation_y, validation_pred)
-    
-
-def print_micro_averages(validation_y, validation_pred):
-    """ Prints the micro and macro average precision recall and fscore
-    """
-    val_y = list(validation_y)
-    val_pred = list(validation_pred)
-    
-    preRecF = precision_recall_fscore_support(val_y, val_pred, average='micro')
-
-    print '\t\t  P\tR\tF' 
-    print 'Micro-average:  %0.4f\t%0.4f\t%0.4f' %(preRecF[0], preRecF[1], preRecF[2])
    
 
 
-        
-# Uncomment to test the system
-train_x, validation_x, train_y, validation_y = get_data('preprocessed_data.csv')
-clf = NB_train_classifier(train_x, train_y, validation_x, validation_y)
-validation_pred = getPredictions(clf, validation_x)
-print get_classification_report(validation_y, validation_pred)
-print
-#print getLogLoss(validation_y, validation_pred)
-#print
-print_accuracy(validation_y, validation_pred)
-print
-print_micro_averages(validation_y, validation_pred)
-print 
-predictions = getPredictProbabilities(clf, validation_x)
-print getPredictProbabilities(clf, validation_x)
-print '\n\n'
-
-
-
-# USING THE TEST DATA
-print 'Testing it using the test data'
-test_x, test_y = get_test_data('test_data.csv')
-test_pred = getPredictions(clf, test_x)
-print get_classification_report(test_y, test_pred)
-print
-print_accuracy(test_y, test_pred)
-print
-print_micro_averages(test_y, test_pred)
-print 
-predictions = getPredictProbabilities(clf, test_x)
-print getPredictProbabilities(clf, test_x)
-
-#writing test results to csv file
-result = pd.DataFrame(predictions, columns=get_classnames())
-result.to_csv('Result.csv', index = True, index_label = 'Id' )
+#------Putting it together-----------------------------------------------------
+def NB_clf_system(filename):
+    """A function that trains a Bernoulli Naive Bayes classifier and returns
+    the precision, recall and accuracy for the trained classifier.
+    """
+    train_x, validation_x, train_y, validation_y = get_data(filename)
+    
+    clf = NB_train_classifier(train_x, train_y, validation_x, validation_y)
+    
+    validation_pred = getPredictions(clf, validation_x)
+    
+    precision = precision_score(validation_y, validation_pred, average='micro')
+    
+    recall = recall_score(validation_y, validation_pred, average='micro')
+    
+    accuracy = accuracy_score(validation_y, validation_pred)
+    
+    return precision, recall, accuracy
+    
+    
+    
+    
 
 
     
