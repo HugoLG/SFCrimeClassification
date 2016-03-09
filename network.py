@@ -6,7 +6,7 @@ def train():
     The program runs off two special files, called training.txt
     and validation.txt . At the end of training, the program
     prints the confusion matrix to a file called confusion_matrixt.txt
-    and the precision/recall of each class to a file called 
+    and the precision/recall of each class to a file called
     precision_recall.txt. This file also contains, at the end,
     a value of the accuracy of the system over the validation data.
 
@@ -35,12 +35,12 @@ def predict():
     must be a csv file called "predict.csv" and must be separated
     by spaces. Finally, the result is printed to a file called
     resultsPredict.csv with the categories ordered alphabetically
-    and separated by commas. 
+    and separated by commas.
     """
     os.system("g++ Source.cpp")
     os.system("./a.out C")
 
-
-train()
-tests()
-predict()
+if __name__ == '__main__':
+    train()
+    tests()
+    predict()

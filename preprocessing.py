@@ -7,12 +7,12 @@ from sklearn.metrics import log_loss
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.linear_model import LogisticRegression
 import numpy as np
- 
+
 
 def preprocess(file, isTraining):
     """
     Receives the name of the file that is used for obtaining the data and a boolean.
-    If the boolean is true, the preprocess prepares the trianing file
+    If the boolean is true, the preprocess prepares the training file
     If the boolean is false, the preprocess prepares the testing file
     Returns
         Nothing, prints a file with the following format:
@@ -46,7 +46,7 @@ def preprocess(file, isTraining):
                 categoryDict[crime[i]] = counterCategory
                 counterCategory += 1
 
-        crime_processed = [categoryDict[c] for c in crime] 
+        crime_processed = [categoryDict[c] for c in crime]
         crime_processed = pd.DataFrame(crime_processed)
 
 
@@ -85,7 +85,7 @@ def preprocess(file, isTraining):
     #normalize X
     preprocessing.normalize(X, norm = 'max', copy = False)
     #reduce decimal places
-    f = lambda x: '%.5f' % float(x) 
+    f = lambda x: '%.5f' % float(x)
     X = X.map(f)
     X = pd.DataFrame(X)
 
@@ -93,11 +93,11 @@ def preprocess(file, isTraining):
     #normalize Y
     preprocessing.normalize(Y, norm = 'max', copy = False)
     #reduce decimal places
-    f = lambda x: '%.5f' % float(x) 
+    f = lambda x: '%.5f' % float(x)
     Y = Y.map(f)
     Y = pd.DataFrame(Y)
 
- 
+
     #Build new array
     train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
     if isTraining:
@@ -109,11 +109,11 @@ def preprocess(file, isTraining):
 
         out_file.close
         train_data.to_csv("preprocessed_data.csv", sep=',')
-    
+
     else:
         train_data.to_csv("preprocessed_testing.csv", sep=',')
 
     return train_data
 
-
-preprocess('train.csv', True)
+if __name__ == '__main__':
+    preprocess('singlePredictionData.csv', False)

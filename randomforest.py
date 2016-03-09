@@ -162,7 +162,7 @@ def printConfusionTable(confTable):
             recall = (float)(confTable[i][0][0])/(float)(confTable[i][0][0]+confTable[i][1][0])
         except ZeroDivisionError:
             recall = 'not measurable'
-        
+
         print '['+str(confTable[i][0][0])+'|'+str(confTable[i][0][1])+']'
         print '['+str(confTable[i][1][0])+'|'+str(confTable[i][1][1])+']'
         print "precision ", precision
@@ -176,9 +176,9 @@ def randomForestPredicted(X,numCat,pool):
         for t in pool:
             try:
                 result = t.predict(X.iloc[index])
+                countResult[result] = countResult[result]+1
             except ValueError:
                 pass
-            countResult[result] = countResult[result]+1
         maxIndex = countResult.index(max(countResult))
         y.append(maxIndex)
     return y
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     testData = pd.read_csv('preprocessed_testing.csv')#_cut.csv')
     #print testData
     #data = pd.np.array(testData)
-    
+
     #print data
     #data =  np.delete(data,-1,axis=0)
     y = randomForestPredicted(testData, 39, p)
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
     from postprocessing import writeOutputToCSV
     writeOutputToCSV('run_10trees.csv',y,'dictionary.txt')
-    
+
 
 #printconfusiontablentConfusionTable()
 #print randomForestPredicted([X_test.iloc[0],X_test.iloc[2]])
