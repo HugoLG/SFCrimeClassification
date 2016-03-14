@@ -10,6 +10,7 @@ from network import *
 from algorithms import *
 from time import gmtime, strftime
 import json
+import tkMessageBox as mbox
 
 initialValues = ['']
 rfPool = [] #Pool returned by the Random Forest training method
@@ -28,10 +29,10 @@ class NotebookDemo(ttk.Frame):
         self.master.config(menu=menubar)
 
         fileMenu = Menu(menubar)
-        fileMenu.add_command(label="Import Data", command=lambda: self.onImport())
+        #fileMenu.add_command(label="Import Data", command=lambda: self.onImport())
         fileMenu.add_command(label="Exit", command=self.onExit)
         helpMenu = Menu(menubar)
-        helpMenu.add_command(label="Help", command=self.onExit)
+        helpMenu.add_command(label="Help", command=self.onHelp)
         menubar.add_cascade(label="File", menu=fileMenu)
         menubar.add_cascade(label="Help", menu=helpMenu)
 
@@ -54,20 +55,33 @@ class NotebookDemo(ttk.Frame):
     def _create_main_tab(self, nb):
 
         mainFrame = Frame(nb)
+        """
+        bgImage = Tkinter.PhotoImage(file="cover.png")
+        bgLabel = Label(mainFrame, image=bgImage)
+        bgLabel.bgImage = bgImage
+        bgLabel.pack()
+        """
 
         trainFrame = Frame(mainFrame)
         trainFrame.pack(fill=X)
         trainFilenameLabel = Label(trainFrame, text="No File", width=15)
         trainFilenameLabel.pack(side=LEFT, padx=5, pady=5)
-        importTrainButton = Button(trainFrame, text="Import File", command=lambda: self.onImport(trainFilenameLabel))
+        importTrainButton = Button(trainFrame, text="Import File", command=lambda: self.onImport(trainFilenameLabel, True))
         importTrainButton.pack(side=LEFT, padx=5, pady=5)
         classifierValue = StringVar()
         trainClassifierComboBox = ttk.Combobox(trainFrame, state="readonly", textvariable=classifierValue)
         trainClassifierComboBox['values']=("Random Forest", "Neural Network", "Naive Bayes")
         #trainClassifierComboBox.current(0)
         trainClassifierComboBox.pack(padx=5, expand=True)
-        trainButton = Button(trainFrame, text="Train classifier", command=lambda: self.train(trainFilenameLabel, trainClassifierComboBox, testClassifierComboBox))
+        trainButton = Button(trainFrame, text="Train classifier", command=lambda: self.train(trainFilenameLabel, trainClassifierComboBox, testClassifierComboBox, trainMetricsDisplay))
         trainButton.pack(padx=5, pady=5)
+
+        trainMetricsFrame = Frame(mainFrame)
+        trainMetricsFrame.pack(fill=X)
+        trainMetricsDisplay = Listbox(trainMetricsFrame, height=3)
+        trainMetricsDisplay.pack(padx=5, pady=5)
+        #clearButton = Button(trainMetricsFrame, text="clear metrics", command=lambda: self.clearMetrics(trainMetricsDisplay))
+        #clearButton.pack(padx=5, pady=5)
 
         separateFrame = Frame(mainFrame)
         separateFrame.pack(fill=X)
@@ -78,18 +92,24 @@ class NotebookDemo(ttk.Frame):
         testFrame.pack(fill=X)
         testFilenameLabel = Label(testFrame, text="No File", width=15)
         testFilenameLabel.pack(side=LEFT, padx=5, pady=5)
-        importTestButton = Button(testFrame, text="Import File", command=lambda: self.onImport(testFilenameLabel))
+        importTestButton = Button(testFrame, text="Import File", command=lambda: self.onImport(testFilenameLabel, False))
         importTestButton.pack(side=LEFT, padx=5, pady=5)
         testClassifierValue = StringVar()
         testClassifierComboBox = ttk.Combobox(testFrame, state="readonly", textvariable=testClassifierValue)
         testClassifierComboBox['values'] = initialValues #("Random Forest", "Neural Network", "Naive Bayes")
         #testClassifierComboBox.current(0)
         testClassifierComboBox.pack(padx=5, expand=True)
-        testButton = Button(testFrame, text="Test classifier", command=lambda: self.train(trainFilenameLabel, trainClassifierComboBox))
+        testButton = Button(testFrame, text="Test classifier", command=lambda: self.test(testFilenameLabel, testClassifierComboBox, outputFileNameEntry.get()))
         testButton.pack(padx=5, pady=5)
-
+        outputFileLabel = Label(testFrame, text="Name of the output file: ")
+        outputFileLabel.pack(side=LEFT, padx=5, pady=15)
+        outputFileNameEntry = Entry(testFrame)
+        outputFileNameEntry.pack(side=LEFT, padx=5, pady=15, expand=True)
 
         nb.add(mainFrame, text="main")
+
+    def clearMetrics(self, trainMetricsDisplay):
+        trainMetricsDisplay.delete(0,trainMetricsDisplay.size())
 
     def _create_predict_tab(self, nb):
         mainFrame = Frame(nb)
@@ -107,7 +127,7 @@ class NotebookDemo(ttk.Frame):
         policeDistrictLabel.pack(side=LEFT, padx=3, pady=5)
         pdDistrictValue = StringVar()
         pdDistrictComboBox = ttk.Combobox(pdFrame, textvariable=pdDistrictValue)
-        pdDistrictComboBox['values']=("pd1", "pd2", "pd3")
+        pdDistrictComboBox['values']=("NORTHERN", "PARK", "INGLESIDE", "BAYVIEW", "RICHMOND", "CENTRAL", "TARAVAL", "TENDERLOIN", "MISSION", "SOUTHERN")
         pdDistrictComboBox.current(0)
         pdDistrictComboBox.pack(padx=5, expand=True)
 
@@ -119,6 +139,16 @@ class NotebookDemo(ttk.Frame):
         ttkcal.pack()
         #dateButton = Button(dateFrame, text="Choose Date", command=lambda: self.showDate(ttkcal))
         #dateButton.pack(padx=5, pady=5)
+
+        timeFrame = Frame(mainFrame)
+        timeFrame.pack(fill=X)
+        timeLabel = Label(timeFrame, text="Time when crime was committed:")
+        timeLabel.pack(side=LEFT, padx=5, pady=5)
+        hourValue = StringVar()
+        hourComboBox = ttk.Combobox(timeFrame, textvariable=hourValue, width=5)
+        hourComboBox['values'] = ('0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23')
+        hourComboBox.current(0)
+        hourComboBox.pack(padx=5)
 
         """
         #Remove comments if you want to show labels for Latitude and Longitude
@@ -141,8 +171,14 @@ class NotebookDemo(ttk.Frame):
         predictClassifierComboBox['values']=("Random Forest", "Neural Network", "Naive Bayes")
         predictClassifierComboBox.current(0)
         predictClassifierComboBox.pack(side=LEFT, padx=5, expand=True)
-        predictButton = Button(predictFrame, text="Predict Category", command= lambda: self.onPredictValue(addressEntry,pdDistrictComboBox,ttkcal,predictClassifierComboBox.get()))
+        predictButton = Button(predictFrame, text="Predict Category", command= lambda: self.onPredictValue(addressEntry,pdDistrictComboBox,ttkcal,predictClassifierComboBox.get(), outputDisplay))
         predictButton.pack(padx=5, pady=5)
+
+        outputFrame = Frame(mainFrame)
+        outputFrame.pack(fill=X)
+        outputDisplay = Listbox(outputFrame, height=3)
+        outputDisplay.pack(padx=5, pady=5)
+
 
         nb.add(mainFrame, text="Predict")
 
@@ -155,39 +191,77 @@ class NotebookDemo(ttk.Frame):
             initialValues.append(trainClassifierComboBox.get())
             testClassifierComboBox['values'] = initialValues
 
-    def train(self, trainFilenameLabel, trainClassifierComboBox, testClassifierComboBox):
+    def train(self, trainFilenameLabel, trainClassifierComboBox, testClassifierComboBox, trainMetricsDisplay):
         if trainFilenameLabel["text"] == "No File":
             print("no training file available")
         else:
             if trainClassifierComboBox.get() == "Random Forest":
                 global rfPool
-                rfPool, cfMatrix = randomForest(trainFilenameLabel["text"])
-                print rfPool
+                rfPool, cfMatrix, rfPrecision, rfRecall, rfCorrectlyClassify = randomForest("preprocessed_data.csv")
+                #print rfPool
+                trainMetricsDisplay.insert(1,"precision:"+str(rfPrecision))
+                trainMetricsDisplay.insert(2,"recall:"+str(rfRecall))
+                trainMetricsDisplay.insert(3, "accuracy:"+str(rfCorrectlyClassify))
                 self.modifyValuesList(trainClassifierComboBox, testClassifierComboBox)
 
             elif trainClassifierComboBox.get() == "Naive Bayes":
                 global clfNaiveBayes
-                precision, recall, accuracy, clfNaiveBayes = NB_clf_system(trainFilenameLabel["text"])
+                precision, recall, accuracy, clfNaiveBayes = NB_clf_system("preprocessed_data.csv")
                 self.modifyValuesList(trainClassifierComboBox, testClassifierComboBox)
+                trainMetricsDisplay.insert(1,"precision:"+str(precision))
+                trainMetricsDisplay.insert(2,"recall:"+str(recall))
+                trainMetricsDisplay.insert(3, "accuracy:"+str(accuracy))
                 print precision, recall, accuracy
             elif trainClassifierComboBox.get() == "Neural Network":
                 train()
                 print("missing to add this module")
+            elif trainClassifierComboBox.get() == "KNN":
+                print "missing to add this module"
             else:
                 print("No classifier selected")
 
-    def onImport(self, trainFilenameLabel):
-        #"""
+    def test(self, testFilenameLabel, testClassifierComboBox, fOutput):
+        categoryList = [line.rstrip() for line in open('dictionary.txt')]
+        if testFilenameLabel["text"] == "No File":
+            print("no testing file available")
+        else:
+            if fOutput == "":
+                mbox.showerror("Output File Name", "No output file name was typed in the entry field")
+            else:
+                if testClassifierComboBox.get() == "Random Forest":
+                    testingData = pd.read_csv("preprocessed_testing.csv")
+                    results = randomForestPredicted(testingData, 39, rfPool)
+                    print(results)
+                elif testClassifierComboBox.get() == "Naive Bayes":
+                    testingData = pd.read_csv("preprocessed_testing.csv")
+                    results = getPredictions(clfNaiveBayes, testingData)
+                    print(results)
+                elif testClassifierComboBox.get() == "Neural Network":
+                    print("missing to add this module")
+                elif testClassifierComboBox.get() == "KNN":
+                    print("missing to add this module")
+                else:
+                    print("No classifier selected")
+
+                resultFile = open(fOutput, 'w')
+                for elem in results:
+                    resultFile.write(categoryList[elem]+"\n")
+
+
+    def onImport(self, trainFilenameLabel, isTraining):
+        # isTraining is a boolean variable that indicates if the preprocess is for training or testing
         ftypes = [('All files', '*'),('Python files', '*py')]
         openFileWindow = tkFileDialog.Open(self, filetypes = ftypes)
         filename = openFileWindow.show()
         if filename == "":
             trainFilenameLabel["text"] = "No File"
         else:
+            preprocess(filename, isTraining)
+            mbox.showinfo("Information", "Preprocesssing file. When preprocess is done, file name will be shown in the file label")
             filename = filename.split("/")
             trainFilenameLabel["text"] = filename[-1]
 
-    def onPredictValue(self, addressEntry, pdDistrictComboBox, ttkcal, clf):
+    def onPredictValue(self, addressEntry, pdDistrictComboBox, ttkcal, clf, outputDisplay):
 
         if clf in initialValues:
             gmaps = googlemaps.Client(key='AIzaSyA9ygeOD-Hs6-FRGnUECmKfF4eZs7sZkzw')
@@ -205,27 +279,41 @@ class NotebookDemo(ttk.Frame):
 
             fOut = open("singlePredictionData.csv", 'w')
             fOut.write("Dates,Category,Descript,DayOfWeek,PdDistrict,Resolution,Address,X,Y\n")
-            fOut.write(str(dateFileFormat)+",,,"+str(dayOfTheWeekValue)+","+str(pdDistrictComboBox.get())+",,"+str(addressEntry.get())+","+str(lat)+","+str(lng))
+            fOut.write(str(dateFileFormat)+",,,"+str(dayOfTheWeekValue)+","+str(pdDistrictComboBox.get())+",,"+str(addressEntry.get())+","+str(lng)+","+str(lat))
             fOut.close()
 
+            prepFile = open("svpFilePreprocessed.csv", 'w')
+            prepFile.write("0,0,0,0,0,0,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,Friday,Monday,Saturday,Sunday,Thursday,Tuesday,Wednesday,BAYVIEW,CENTRAL,INGLESIDE,MISSION,NORTHERN,PARK,RICHMOND,SOUTHERN,TARAVAL,TENDERLOIN,X,Y\n")
+            prepFile.write("0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
+            prepFile.close()
+
             preprocess("singlePredictionData.csv", False)
-
             singleValue = pd.read_csv("preprocessed_testing.csv")
-            headers = singleValue.columns.values
-            headers = np.delete(headers,0)
+            svpData = pd.read_csv("svpFilePreprocessed.csv")
+            incompleteHeaders = singleValue.columns
+            incompleteHeaders = incompleteHeaders.delete(0)
+            completeHeaders = svpData.columns
 
-            dataSingleValue = singleValue[headers]
-            #dataSingleValue.get_values()
-            categNumRandomForest = randomForestPredicted(dataSingleValue, 39, rfPool)
-            print dataSingleValue
-            categNumNB = predict_instance(clfNaiveBayes, dataSingleValue)
+            for elem in incompleteHeaders:
+                svpData[elem][0] = singleValue[elem][0]
 
-            print categNumRandomForest, categNumNB
+
+            if clf == "Random Forest":
+                categNum = randomForestPredicted(svpData, 39, rfPool)
+            elif clf == "Naive Bayes":
+                categNum = predict_instance(clfNaiveBayes, svpData)
+            elif clf == "Neural Network":
+                categNum = [0]
+                print "missing module"
+
+            categoryList = [line.rstrip() for line in open('dictionary.txt')]
+            outputDisplay.insert(1, categoryList[categNum[0]])
+
+            #print categNumRandomForest, categNumNB
 
 
         else:
-            print "classifier not trained"
-
+            mbox.showinfo("Warning", "Classifier has not been trained")
 
 
     def getGeolocation(self, latitudeLabel, longitudeLabel, addressEntry):
@@ -236,7 +324,11 @@ class NotebookDemo(ttk.Frame):
             latitudeLabel.config(text=addressEntry.get())
             longitudeLabel.config(text="entry long")
 
-
+    def onHelp(self):
+        topLevelWindow = Toplevel()
+        instrucLabel = Label(topLevelWindow, text="Instructions...")
+        instrucLabel.pack()
+        topLevelWindow.focus_force()
 
 if __name__ == '__main__':
 

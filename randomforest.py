@@ -148,7 +148,7 @@ def randomForest(file):
 
     #this is the accuracy by definition, include the TN into computation
     print ("accuracy %f" %((TP+TN)/(TP+FP+FN+TN)))
-    return pool,confTable
+    return pool,confTable,precision, recall, (correctly/len(y_test))
 
 """print confusion table of this training"""
 def printConfusionTable(confTable):
