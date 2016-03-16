@@ -13,6 +13,11 @@ def train():
     Finally, these files represent the categories sorted
     ALPHABETICALLY
     """
+    os.system("perl -pi -e 's/,/ /g' " + name)
+    os.system("sed '1d' "+name+" > firstRowRemoved.csv")
+    os.system("cut -d ' ' -f 2- firstRowRemoved.csv > firstColumnRemoved.csv")
+    os.system("g++ splitter.cpp")
+    os.system("./a.out")
     os.system("g++ Source.cpp")
     os.system("./a.out A")
 
