@@ -49,7 +49,7 @@ public:
 	double runValidation(bool calculateMatrix);
 	void getNormalizer();
 	void saveToFile(string fileName);
-	void runTest(double** dat);
+	void runTest(double** dat, string fName, string fRes);
 	void predict();
 
 };
@@ -73,8 +73,8 @@ NeuralNetwork::NeuralNetwork(double l, double e, double m,
 		inputNeurons.push_back(n);
 	}
 
-	//creat hidden layers and neurons and 
-	//add them to the vector, add an extra 
+	//creat hidden layers and neurons and
+	//add them to the vector, add an extra
 	//neuron to act as bias
 	for (int i = 0; i<layersCount; i++) {
 		vector <Neuron> layer;
@@ -206,7 +206,7 @@ void NeuralNetwork::run(int epochs, double** dat, double** val) {
 		for (int k = 0; k < ammountData; k++){
 			//bias input
 			input.push_back(1);
-			//read input and output		
+			//read input and output
 			for (int j = 1; j<inputNeurons.size(); j++) {
 				input.push_back(data[k][j - 1]);
 			}
@@ -214,7 +214,7 @@ void NeuralNetwork::run(int epochs, double** dat, double** val) {
 				output.push_back(data[k][j+inputNeurons.size()-1]);
 			}
 
-			//go through the input neurons	
+			//go through the input neurons
 			runInputs(input);
 
 			//go through the output neurons
@@ -333,7 +333,7 @@ are more than one hidden layers in the
 network.
 */
 void NeuralNetwork::runHiddenLayer() {
-	//loop through every layer except the 
+	//loop through every layer except the
 	//first one as it has already been done
 	for (int j = 1; j<hiddenLayers.size(); j++) {
 		for (int k = 1; k<hiddenLayers[j].size(); k++) {
@@ -346,7 +346,7 @@ void NeuralNetwork::runHiddenLayer() {
 }
 
 /*
-This method runs the output 
+This method runs the output
 layer of the neural network.
 */
 void NeuralNetwork::runOutputLayer() {
@@ -401,7 +401,7 @@ vector <double> NeuralNetwork::calculateInputGradients(const vector <double> &ou
 	double gradient;
 	vector <double> inputGradients;
 	//For every node in the hidden layer
-	//calculate the gradient 
+	//calculate the gradient
 	for (int j = 1; j < hiddenLayers[0].size(); j++) {
 		//Sum of Gk*Wki
 		for (int k = 0; k < outputGradients.size(); k++) {
@@ -423,7 +423,7 @@ void NeuralNetwork::updateOutputWeights(const vector <double> &outputGradients) 
 	double deltaWeight;
 	double alphaChange;
 	//For every node in the output layer
-	//update the weight of all the hidden 
+	//update the weight of all the hidden
 	//nodes going towards it
 	for (int j = 0; j < outputNeurons.size(); j++) {
 		for (int k = 0; k <hiddenLayers[0].size(); k++) {
@@ -459,7 +459,7 @@ This method runs the network over the validation data
 */
 double NeuralNetwork::runValidation(bool calculateMatrix) {
 	double sumError = 0;
-	double count = 0;	
+	double count = 0;
 	vector <double> error;
 	double val[8];
 	double accuracy = 0;
@@ -476,12 +476,12 @@ double NeuralNetwork::runValidation(bool calculateMatrix) {
 			output.push_back(validationData[k][j+inputNeurons.size()-1]);
 		}
 
-		//go through the input neurons	
+		//go through the input neurons
 		runInputs(input);
 
 		//go through the output neurons
 		runOutputLayer();
-		
+
 		//accuracy and error calculation
 		calculateError(output);
 		double highest = -10.0;
@@ -523,15 +523,15 @@ This method runs the trained neural network over
 the test data and produces an output file that
 can be uploaded to Kaggle
 */
-void NeuralNetwork::runTest(double** dat) {
+void NeuralNetwork::runTest(double** dat, string fName, string fRes) {
 	data = dat;
 	FILE *fp;
-	fp = fopen("preprocessed_testing.csv", "r");
+	fp = fopen(fName.c_str(), "r");
 	FILE *out;
-	out = fopen("results.csv", "w");
+	out = fopen(fRes.c_str(), "w");
 	ammountData = 0;
 	ammountValidation = 0;
-	
+
 	int s = inputNeurons.size() - 1;
 	vector <double> maxValues(s, 0);
 	vector <double> minValues(s, 5000);
@@ -555,13 +555,13 @@ void NeuralNetwork::runTest(double** dat) {
 
 	for (int i = 0; i < ammountData; i++) {
 		input.push_back(1);
-		//read input and output and normalize it			
+		//read input and output and normalize it
 		for (int j = 1; j<inputNeurons.size(); j++) {
 			data[i][j-1] = (data[i][j-1] - minValues[j-1]) / (maxValues[j-1] - minValues[j-1]);
 			input.push_back(data[i][j - 1]);
 		}
 
-		//go through the input neurons	
+		//go through the input neurons
 		runInputs(input);
 
 		//go through the output neurons
@@ -594,7 +594,7 @@ void NeuralNetwork::runTest(double** dat) {
 }
 
 void NeuralNetwork::getNormalizer() {
-	
+
 	//change this one to min int and max int?
 	ammountData = 0;
 	ammountValidation = 0;
@@ -692,11 +692,12 @@ void NeuralNetwork::saveToFile(string fileName) {
 }
 
 /*
-This method saves the prediction 
+This method saves the prediction
 to a query in a file
 */
 void NeuralNetwork::predict() {
 	//read information from file
+    string labels[39] ={"ARSON","ASSAULT","BAD CHECKS","BRIBERY","BURGLARY","DISORDERLY CONDUCT","DRIVING UNDER THE INFLUENCE","DRUG/NARCOTIC","DRUNKENNESS","EMBEZZLEMENT","EXTORTION","FAMILY OFFENSES","FORGERY/COUNTERFEITING","FRAUD","GAMBLING","KIDNAPPING","LARCENY/THEFT","LIQUOR LAWS","LOITERING","MISSING PERSON","NON-CRIMINAL","OTHER OFFENSES","PORNOGRAPHY/OBSCENE MAT","PROSTITUTION","RECOVERED VEHICLE","ROBBERY","RUNAWAY","SECONDARY CODES","SEX OFFENSES FORCIBLE","SEX OFFENSES NON FORCIBLE","STOLEN PROPERTY","SUICIDE","SUSPICIOUS OCC","TREA","TRESPASS","VANDALISM","VEHICLE THEFT","WARRANTS","WEAPON LAWS"};
 	FILE *fp;
 	fp = fopen("predict.csv", "r");
 
@@ -711,13 +712,19 @@ void NeuralNetwork::predict() {
 	runInputs(input);
 
 	runOutputLayer();
-
+    double maxVal = -10.0;
+    int maxLabel = 0;
 	double sumOutput = 0;
 	for (int j = 0; j < outputNeurons.size(); j++) {
 		if (outputNeurons[j].getH()>0) {
 			sumOutput += outputNeurons[j].getH();
+            if(outputNeurons[j].getH()>maxVal){
+                maxVal=outputNeurons[j].getH();
+                maxLabel = j;
+            }
 		}
 	}
+    /*
 	for (int j = 0; j < outputNeurons.size() - 1; j++) {
 		if (outputNeurons[j].getH()>0) {
 			fprintf(out, "%lf,", outputNeurons[j].getH() / sumOutput);
@@ -732,6 +739,8 @@ void NeuralNetwork::predict() {
 	else {
 		fprintf(out, "0.0\n");
 	}
+    */
+    fprintf(out, "%s",labels[maxLabel].c_str());
 	fclose(out);
 	fclose(fp);
 

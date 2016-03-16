@@ -4,8 +4,9 @@
 int main(int argc, char *argv[]) {
 	//Command line arguments are used in order to facilitate
 	//the use of the program from the python interface
-	if (argc != 2 || (argv[1][0]!='A' && argv[1][0]!='B' && argv[1][0]!='C')) {
-		cout << "Invalid usage.\n" << "Correct usage: \n" << "./network option\n";
+    cout<<argc<<endl<<endl;
+	if (argc < 2 || (argv[1][0]!='A' && argv[1][0]!='B' && argv[1][0]!='C')) {
+		cout << "Invalid usage.\n" << "Correct usage: \n" << argv[0]<<" option\n";
 		cout << "Valid options: \n" << "A: Train the classifier\n" << "B: Run the classifier over the test file\n" << "C: Predict a crime\n";
 		cout << "The first time the program is run, the A parameter must be called first.\n";
 		cout << "The program will not run over the test file or predict a crime if it has not been trained first.\n";
@@ -13,8 +14,8 @@ int main(int argc, char *argv[]) {
 	}
 	//The parameter A will train the network
 	if (argv[1][0] == 'A') {
-		//Dynamic memory is used here to speed up 
-		//the training process. Since the data set 
+		//Dynamic memory is used here to speed up
+		//the training process. Since the data set
 		//is too big, the program would'nt allow
 		//for a normal memory allocation
 		double** data = new double*[900000];
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]) {
 			data[i] = new double[77];
 		}
 		NeuralNetwork network("saved.txt");
-		network.runTest(data);
+		network.runTest(data, argv[2], argv[3]);
 		for (int i = 0; i < 900000; i++) {
 			delete[] data[i];
 		}

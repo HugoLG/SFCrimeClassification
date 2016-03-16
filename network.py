@@ -16,7 +16,7 @@ def train():
     os.system("g++ Source.cpp")
     os.system("./a.out A")
 
-def tests():
+def tests(name):
     """
     This method calls the neural network program to run it
     over a test file. It runs over a test file separated by spaces
@@ -25,8 +25,11 @@ def tests():
     the program prints the results to a csv file that is ready to
     be uploaded to kaggle.
     """
+    os.system("perl -pi -e 's/,/ /g' " + name)
+    os.system("sed '1d' "+name+" > firstRowRemoved.csv")
+    os.system("cut -d ' ' -f 2- firstRowRemoved.csv > firstColumnRemoved.csv")
     os.system("g++ Source.cpp")
-    os.system("./a.out B")
+    os.system("./a.out B firstColumnRemoved.csv res.csv")
 
 def predict():
     """
@@ -41,6 +44,6 @@ def predict():
     os.system("./a.out C")
 
 if __name__ == '__main__':
-    train()
-    tests()
+    #train()
+    #tests("preprocessed_testing.csv")
     predict()
