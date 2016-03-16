@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 
 
-def preprocess(file, isTraining):
+def preprocess(file, isTraining, isNeuralNetwork):
     """
     Receives the name of the file that is used for obtaining the data and a boolean.
     If the boolean is true, the preprocess prepares the training file
@@ -49,6 +49,8 @@ def preprocess(file, isTraining):
         crime_processed = [categoryDict[c] for c in crime]
         crime_processed = pd.DataFrame(crime_processed)
 
+    if isNeuralNetwork:
+        crime2 = pd.get_dummies(train.Category)
 
     #Get binarized weekdays and districts.
     days = pd.get_dummies(train.DayOfWeek)
@@ -99,9 +101,12 @@ def preprocess(file, isTraining):
 
 
     #Build new array
-    train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
     if isTraining:
-        train_data['crime']=crime_processed
+        if isNeuralNetwork:
+            train_data = pd.concat([hour, day, month, year, days, district, X, Y, crime2], axis=1)
+        else:
+            train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
+            train_data['crime']=crime_processed
         out_file =open('dictionary.txt', "w")
         for k in sorted(categoryDict, key=categoryDict.get):
             out_file.write(k)
@@ -116,4 +121,4 @@ def preprocess(file, isTraining):
     return train_data
 
 if __name__ == '__main__':
-    preprocess('singlePredictionData.csv', False)
+    preprocess('singlePredictionData.csv', False, True)
