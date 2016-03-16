@@ -12,7 +12,7 @@ from time import gmtime, strftime
 import json
 import tkMessageBox as mbox
 
-initialValues = ['']
+initialValues = ['Neural Network']
 rfPool = [] #Pool returned by the Random Forest training method
 clfNaiveBayes = None #Trained Naive Bayes Classifier
 
@@ -80,7 +80,7 @@ class NotebookDemo(ttk.Frame):
         trainMetricsFrame.pack(fill=X)
         trainMetricsDisplay = Listbox(trainMetricsFrame, height=3)
         trainMetricsDisplay.pack(padx=5, pady=5)
-        #clearButton = Button(trainMetricsFrame, text="clear metrics", command=lambda: self.clearMetrics(trainMetricsDisplay))
+        #clearButton = Button(trainMetricsFrame, text="clear metrics", command=lambda: self.clearDisplay(trainMetricsDisplay))
         #clearButton.pack(padx=5, pady=5)
 
         separateFrame = Frame(mainFrame)
@@ -107,9 +107,6 @@ class NotebookDemo(ttk.Frame):
         outputFileNameEntry.pack(side=LEFT, padx=5, pady=15, expand=True)
 
         nb.add(mainFrame, text="main")
-
-    def clearMetrics(self, trainMetricsDisplay):
-        trainMetricsDisplay.delete(0,trainMetricsDisplay.size())
 
     def _create_predict_tab(self, nb):
         mainFrame = Frame(nb)
@@ -185,6 +182,9 @@ class NotebookDemo(ttk.Frame):
 
     def onExit(self):
         self.quit()
+
+    def clearDisplay(self, display):
+        display.delete(0,display.size())
 
     def modifyValuesList(self, trainClassifierComboBox, testClassifierComboBox):
         if str(trainClassifierComboBox.get()) not in initialValues:
@@ -296,18 +296,37 @@ class NotebookDemo(ttk.Frame):
 
             for elem in incompleteHeaders:
                 svpData[elem][0] = singleValue[elem][0]
+                if elem == "X":
+                    svpData[elem][0] = (lng - (-122.5136421))/((-122.3649375)-(-122.5136421))
+                    print lng
+                    print svpData[elem][0]
+                if elem == "Y":
+                    svpData[elem][0] = (lat - (37.70787902))/((37.81997549)-(37.70787902))
+                    print lat
+                    print svpData[elem][0]
 
+            if outputDisplay.size() > 0:
+                self.clearDisplay(outputDisplay)
 
             if clf == "Random Forest":
                 categNum = randomForestPredicted(svpData, 39, rfPool)
+                categoryList = [line.rstrip() for line in open('dictionary.txt')]
+                outputDisplay.insert(1, categoryList[categNum[0]])
             elif clf == "Naive Bayes":
                 categNum = predict_instance(clfNaiveBayes, svpData)
+                categoryList = [line.rstrip() for line in open('dictionary.txt')]
+                outputDisplay.insert(1, categoryList[categNum[0]])
             elif clf == "Neural Network":
-                categNum = [0]
-                print "missing module"
-
-            categoryList = [line.rstrip() for line in open('dictionary.txt')]
-            outputDisplay.insert(1, categoryList[categNum[0]])
+                nnPredictFile = open("predict.csv", 'w')
+                for elem in completeHeaders:
+                    nnPredictFile.write(str(svpData[elem][0])+" ")
+                nnPredictFile.write("\n")
+                nnPredictFile.close()
+                predict()
+                fileResultNN = open("resultsPredict.csv")
+                result = fileResultNN.read()
+                outputDisplay.insert(1, result)
+                print result
 
             #print categNumRandomForest, categNumNB
 
@@ -326,7 +345,8 @@ class NotebookDemo(ttk.Frame):
 
     def onHelp(self):
         topLevelWindow = Toplevel()
-        instrucLabel = Label(topLevelWindow, text="Instructions...")
+        instrucLabel = Label(topLevelWindow,
+        	text="Instructions...\n How to train a classifier?\n 1. You must click the \"import\" button inside the training section.\n 2. A File Dialog window will be shown, search for the file with the training data and open it. \n 3. The file will be imported, preprocessed and the file name will be displayed in the file name label which initially displays the text \"No File\". \n 4. Then you should select a classifier from the options in the drop down list. \n 5. After doing the previous steps, you may now train the selected classifier with the imported data by clicking in the \"Train\" button. \n\n How to test a classifier?\n 1. Import the file with input data by clicking in the \"import\" button and then selecting the file in the File Dialog window.\n 2. The file will be automatically preprocessed and the file name will appear in the file label when the file is already preprocessed.\n 3. Select the classifier you want to use from the drop down list, note that in this list you will only have available the previously trained classifiers.\n 4. Type the output file name in the entry field.\n 5. Click on the \"Test classifier\" button. This will test the classifier and output the results in the file with the name you typed.\n\n Predicting a single input.\n 1. Input the address of the crime, this needs to be typed avoiding any special character.\n 2. Select the Police District to which the place of the crime belongs.\n 3. Select the date of the crime and select the hour of the day at which it was committed.\n 4. Select the classifier you are going to use to predict the crime category, have in mind that this classifier must already be trained.\n 5. Click on the predict category button. The predicted category will be shown in the output window.\n")
         instrucLabel.pack()
         topLevelWindow.focus_force()
 
