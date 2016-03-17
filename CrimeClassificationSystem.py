@@ -11,10 +11,13 @@ from algorithms import *
 from time import gmtime, strftime
 import json
 import tkMessageBox as mbox
+import os.path
 
-initialValues = ['Neural Network']
+initialValues = ['']
 rfPool = [] #Pool returned by the Random Forest training method
 clfNaiveBayes = None #Trained Naive Bayes Classifier
+importedTrainFileName = ""
+importedTestFileName = ""
 
 class NotebookDemo(ttk.Frame):
 
@@ -96,7 +99,12 @@ class NotebookDemo(ttk.Frame):
         importTestButton.pack(side=LEFT, padx=5, pady=5)
         testClassifierValue = StringVar()
         testClassifierComboBox = ttk.Combobox(testFrame, state="readonly", textvariable=testClassifierValue)
-        testClassifierComboBox['values'] = initialValues #("Random Forest", "Neural Network", "Naive Bayes")
+        if os.path.isfile("saved.txt"):
+            global initialValues
+            initialValues.append("Neural Network")
+            testClassifierComboBox['values'] = initialValues
+        else:
+            testClassifierComboBox['values'] = initialValues #("Random Forest", "Neural Network", "Naive Bayes")
         #testClassifierComboBox.current(0)
         testClassifierComboBox.pack(padx=5, expand=True)
         testButton = Button(testFrame, text="Test classifier", command=lambda: self.test(testFilenameLabel, testClassifierComboBox, outputFileNameEntry.get()))
@@ -193,18 +201,23 @@ class NotebookDemo(ttk.Frame):
 
     def train(self, trainFilenameLabel, trainClassifierComboBox, testClassifierComboBox, trainMetricsDisplay):
         if trainFilenameLabel["text"] == "No File":
-            print("no training file available")
+            mbox.showerror("No File", "Please select a file to be able to do training")
         else:
             if trainClassifierComboBox.get() == "Random Forest":
                 global rfPool
                 rfPool, cfMatrix, rfPrecision, rfRecall, rfCorrectlyClassify = randomForest("preprocessed_data.csv")
                 #print rfPool
+                if trainMetricsDisplay.size() > 0:
+                    self.clearDisplay(trainMetricsDisplay)
                 trainMetricsDisplay.insert(1,"precision:"+str(rfPrecision))
                 trainMetricsDisplay.insert(2,"recall:"+str(rfRecall))
                 trainMetricsDisplay.insert(3, "accuracy:"+str(rfCorrectlyClassify))
                 self.modifyValuesList(trainClassifierComboBox, testClassifierComboBox)
 
             elif trainClassifierComboBox.get() == "Naive Bayes":
+                if trainMetricsDisplay.size() > 0:
+                    self.clearDisplay(trainMetricsDisplay)
+
                 global clfNaiveBayes
                 precision, recall, accuracy, clfNaiveBayes = NB_clf_system("preprocessed_data.csv")
                 self.modifyValuesList(trainClassifierComboBox, testClassifierComboBox)
@@ -213,17 +226,15 @@ class NotebookDemo(ttk.Frame):
                 trainMetricsDisplay.insert(3, "accuracy:"+str(accuracy))
                 print precision, recall, accuracy
             elif trainClassifierComboBox.get() == "Neural Network":
-                train()
-                print("missing to add this module")
-            elif trainClassifierComboBox.get() == "KNN":
-                print "missing to add this module"
+                preprocess(importedTrainFileName, True, True)
+                train("preprocessed_data.csv")
             else:
-                print("No classifier selected")
+                mbox.showerror("No classifier selected", "Please select a classifier before attempting training")
 
     def test(self, testFilenameLabel, testClassifierComboBox, fOutput):
         categoryList = [line.rstrip() for line in open('dictionary.txt')]
         if testFilenameLabel["text"] == "No File":
-            print("no testing file available")
+            mbox.showerror("No File", "Please select a file to be able to do testing")
         else:
             if fOutput == "":
                 mbox.showerror("Output File Name", "No output file name was typed in the entry field")
@@ -237,15 +248,17 @@ class NotebookDemo(ttk.Frame):
                     results = getPredictions(clfNaiveBayes, testingData)
                     print(results)
                 elif testClassifierComboBox.get() == "Neural Network":
-                    print("missing to add this module")
-                elif testClassifierComboBox.get() == "KNN":
-                    print("missing to add this module")
+                    global importedTestFileName
+                    preprocess(importedTestFileName, False, True)
+                    tests("preprocessed_testing.csv", fOutput)
                 else:
-                    print("No classifier selected")
+                    mbox.showerror("No classifier selected", "Please select a classifier before attempting testing")
 
-                resultFile = open(fOutput, 'w')
-                for elem in results:
-                    resultFile.write(categoryList[elem]+"\n")
+                if testClassifierComboBox.get() == "Naive Bayes" or testClassifierComboBox.get() == "Random Forest":
+
+                    resultFile = open(fOutput, 'w')
+                    for elem in results:
+                        resultFile.write(categoryList[elem]+"\n")
 
 
     def onImport(self, trainFilenameLabel, isTraining):
@@ -253,10 +266,18 @@ class NotebookDemo(ttk.Frame):
         ftypes = [('All files', '*'),('Python files', '*py')]
         openFileWindow = tkFileDialog.Open(self, filetypes = ftypes)
         filename = openFileWindow.show()
+        if isTraining:
+            global importedTrainFileName
+            importedTrainFileName= filename
+        else:
+            global importedTestFileName
+            importedTestFileName = filename
+
+
         if filename == "":
             trainFilenameLabel["text"] = "No File"
         else:
-            preprocess(filename, isTraining)
+            preprocess(filename, isTraining, False)
             mbox.showinfo("Information", "Preprocesssing file. When preprocess is done, file name will be shown in the file label")
             filename = filename.split("/")
             trainFilenameLabel["text"] = filename[-1]
@@ -287,7 +308,7 @@ class NotebookDemo(ttk.Frame):
             prepFile.write("0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
             prepFile.close()
 
-            preprocess("singlePredictionData.csv", False)
+            preprocess("singlePredictionData.csv", False, False)
             singleValue = pd.read_csv("preprocessed_testing.csv")
             svpData = pd.read_csv("svpFilePreprocessed.csv")
             incompleteHeaders = singleValue.columns

@@ -116,7 +116,7 @@ def preprocess(file, isTraining, isNeuralNetwork):
         train_data.to_csv("preprocessed_data.csv", sep=',')
 
     else:
-    	train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
+        train_data = pd.concat([hour, day, month, year, days, district, X, Y], axis=1)
         train_data.to_csv("preprocessed_testing.csv", sep=',')
 
     return train_data

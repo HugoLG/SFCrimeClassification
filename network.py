@@ -1,6 +1,6 @@
 import os
 
-def train():
+def train(name):
     """
     This method calls the neural network program and trains it.
     The program runs off two special files, called training.txt
@@ -21,7 +21,7 @@ def train():
     os.system("g++ Source.cpp")
     os.system("./a.out A")
 
-def tests(name):
+def tests(name, outName):
     """
     This method calls the neural network program to run it
     over a test file. It runs over a test file separated by spaces
@@ -34,7 +34,7 @@ def tests(name):
     os.system("sed '1d' "+name+" > firstRowRemoved.csv")
     os.system("cut -d ' ' -f 2- firstRowRemoved.csv > firstColumnRemoved.csv")
     os.system("g++ Source.cpp")
-    os.system("./a.out B firstColumnRemoved.csv res.csv")
+    os.system("./a.out B firstColumnRemoved.csv "+outName)
 
 def predict():
     """
